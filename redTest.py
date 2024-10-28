@@ -23,6 +23,8 @@ def df_cleanner(df):
     return df
 
 df_clean = df_cleanner(df_descNorm)
+train_accuracies = []
+test_accuracies = []
 
 # Separación de datos
 all_inputs = df_clean.iloc[:, :-1].values
@@ -66,21 +68,43 @@ def back_propagation(X, Y, Z1, A1, Z2, A2):
 learning_rate = 0.01
 epochs = 50000
 n = X_train.shape[0]
-
 for i in range(epochs):
-    idx = np.random.randint(0, n)
-    X_sample = X_train[idx].reshape(-1, 1)
-    Y_sample = np.array([[Y_train[idx]]])
+    # Selección aleatoria de una muestra de entrenamiento
+    idx = np.random.choice(n, 1, replace=False)
+    X_sample = X_train[idx].transpose()
+    Y_sample = Y_train[idx]
 
+    # Propagación hacia adelante
     Z1, A1, Z2, A2 = forward_propagation(X_sample)
-    dW1, dB1, dW2, dB2 = back_propagation(X_sample, Y_sample, Z1, A1, Z2, A2)
 
+    # Retropropagación y actualización de pesos
+    dW1, dB1, dW2, dB2 = back_propagation(X_sample, Y_sample, Z1, A1, Z2, A2)
     w_hidden -= learning_rate * dW1
     b_hidden -= learning_rate * dB1
     w_output -= learning_rate * dW2
     b_output -= learning_rate * dB2
 
-# Evaluación en el conjunto de prueba
+    # Cada 1000 iteraciones calculamos el accuracy
+    if i % 1000 == 0:
+        # Precisión en los datos de entrenamiento
+        train_predictions = forward_propagation(X_train.transpose())[3]
+        train_accuracy = np.mean((train_predictions >= 0.5).flatten().astype(int) == Y_train)
+        train_accuracies.append(train_accuracy)
+
+        # Precisión en los datos de prueba
+        test_predictions = forward_propagation(X_test.transpose())[3]
+        test_accuracy = np.mean((test_predictions >= 0.5).flatten().astype(int) == Y_test)
+        test_accuracies.append(test_accuracy)
+
+# Graficamos la precisión en los datos de entrenamiento y prueba
+plt.plot(range(0, epochs, 1000), train_accuracies, label="Precisión Entrenamiento")
+plt.plot(range(0, epochs, 1000), test_accuracies, label="Precisión Prueba")
+plt.xlabel("Iteraciones")
+plt.ylabel("Precisión")
+plt.title("Precisión del Modelo en Datos de Entrenamiento y Prueba")
+plt.legend()
+plt.show()
+
 test_predictions = forward_propagation(X_test.T)[3]
 test_predictions = (test_predictions >= 0.5).astype(int).flatten()
 accuracy = np.mean(test_predictions == Y_test)
