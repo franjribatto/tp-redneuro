@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 
+<<<<<<< HEAD
 # Fijar la semilla para obtener resultados consistentes
 np.random.seed(42)
 
@@ -22,19 +23,24 @@ plt.show()
 
 #Realizamos este boxplot con el fin de poder demostrar que es necesario limpiar el dataframe de
 #Datos atipicos porque como se puede ver son bastantes y pueden reducir la precision de la ia
+=======
+# Importar y normalizar datos
+dataBase = pd.read_csv("heart.csv")
+df_dataBase = dataBase[["age", "cp", "trtbps", "chol", "fbs", "thalachh", "exng"]]
+df_desc = df_dataBase.describe().T
+df_descNorm = (df_dataBase.iloc[:, :-1] - df_desc['mean'][:-1]) / df_desc['std'][:-1]
+df_descNorm['exng'] = df_dataBase['exng']
+>>>>>>> fadd6398d599982a421cfbb7c4475eb6e782ddf2
 
 def df_cleanner(df):
-    for column in df.columns:
+    for column in df.columns[:-1]:  # Limitar solo a entradas
         Q1 = df[column].quantile(0.25)
         Q3 = df[column].quantile(0.75)
         IQR = Q3 - Q1
-
-        # Definir límites inferior y superior
         lower_bound = Q1 - 1.5 * IQR
         upper_bound = Q3 + 1.5 * IQR
-
-        # Calcular la media de la columna
         mean_value = df[column].mean()
+<<<<<<< HEAD
 
         # Reemplazar outliers por la media
         df.loc[(df[column] < lower_bound) | (df[column] > upper_bound), column] =float( mean_value)
@@ -99,6 +105,26 @@ w_output = np.random.rand(1, 6) * 0.01
 b_hidden = np.random.rand(6, 1) * 0.01
 b_output = np.random.rand(1, 1) * 0.01
 
+=======
+        df.loc[(df[column] < lower_bound) | (df[column] > upper_bound), column] = mean_value
+    return df
+
+df_clean = df_cleanner(df_descNorm)
+train_accuracies = []
+test_accuracies = []
+
+# Separación de datos
+all_inputs = df_clean.iloc[:, :-1].values
+all_outputs = df_clean.iloc[:, -1].values
+X_train, X_test, Y_train, Y_test = train_test_split(all_inputs, all_outputs, test_size=0.2, random_state=42)
+
+# Inicialización de pesos
+w_hidden = np.random.rand(6, 6) * 0.01
+w_output = np.random.rand(1, 6) * 0.01
+b_hidden = np.random.rand(6, 1) * 0.01
+b_output = np.random.rand(1, 1) * 0.01
+
+>>>>>>> fadd6398d599982a421cfbb7c4475eb6e782ddf2
 # Funciones de activación
 relu = lambda x: np.maximum(x, 0)
 logistic = lambda x: 1 / (1 + np.exp(-x))
@@ -123,6 +149,7 @@ def back_propagation(X, Y, Z1, A1, Z2, A2):
     dC_dA1 = w_output.T @ (dC_dA2 * dA2_dZ2)
     dC_dW1 = dC_dA1 * d_relu(Z1) @ X.T
     dC_dB1 = dC_dA1 * d_relu(Z1)
+<<<<<<< HEAD
 
     return dC_dW1, dC_dB1, dC_dW2, dC_dB2
 
@@ -135,8 +162,22 @@ test_accuracies = []
 # Entrenamiento
 learning_rate = 0.01
 epochs = 40000
-n = X_train.shape[0]
+=======
+    
+    return dC_dW1, dC_dB1, dC_dW2, dC_dB2
 
+# Entrenamiento
+learning_rate = 0.01
+epochs = 50000
+>>>>>>> fadd6398d599982a421cfbb7c4475eb6e782ddf2
+n = X_train.shape[0]
+for i in range(epochs):
+    # Selección aleatoria de una muestra de entrenamiento
+    idx = np.random.choice(n, 1, replace=False)
+    X_sample = X_train[idx].transpose()
+    Y_sample = Y_train[idx]
+
+<<<<<<< HEAD
 for i in range(epochs):
     idx = np.random.randint(0, n)
     X_sample = X_train[idx].reshape(-1, 1)
@@ -164,6 +205,30 @@ for i in range(epochs):
         test_accuracy = np.mean(test_predictions == Y_test)
         test_accuracies.append(test_accuracy)
 
+=======
+    # Propagación hacia adelante
+    Z1, A1, Z2, A2 = forward_propagation(X_sample)
+
+    # Retropropagación y actualización de pesos
+    dW1, dB1, dW2, dB2 = back_propagation(X_sample, Y_sample, Z1, A1, Z2, A2)
+    w_hidden -= learning_rate * dW1
+    b_hidden -= learning_rate * dB1
+    w_output -= learning_rate * dW2
+    b_output -= learning_rate * dB2
+
+    # Cada 1000 iteraciones calculamos el accuracy
+    if i % 1000 == 0:
+        # Precisión en los datos de entrenamiento
+        train_predictions = forward_propagation(X_train.transpose())[3]
+        train_accuracy = np.mean((train_predictions >= 0.5).flatten().astype(int) == Y_train)
+        train_accuracies.append(train_accuracy)
+
+        # Precisión en los datos de prueba
+        test_predictions = forward_propagation(X_test.transpose())[3]
+        test_accuracy = np.mean((test_predictions >= 0.5).flatten().astype(int) == Y_test)
+        test_accuracies.append(test_accuracy)
+
+>>>>>>> fadd6398d599982a421cfbb7c4475eb6e782ddf2
 # Graficamos la precisión en los datos de entrenamiento y prueba
 plt.plot(range(0, epochs, 1000), train_accuracies, label="Precisión Entrenamiento")
 plt.plot(range(0, epochs, 1000), test_accuracies, label="Precisión Prueba")
@@ -173,8 +238,15 @@ plt.title("Precisión del Modelo en Datos de Entrenamiento y Prueba")
 plt.legend()
 plt.show()
 
+<<<<<<< HEAD
 # Evaluación final en el conjunto de prueba
 test_predictions = forward_propagation(X_test.T)[3]
 test_predictions = (test_predictions >= 0.5).astype(int).flatten()
 accuracy = np.mean(test_predictions == Y_test)
 print("ACCURACY:", accuracy)
+=======
+test_predictions = forward_propagation(X_test.T)[3]
+test_predictions = (test_predictions >= 0.5).astype(int).flatten()
+accuracy = np.mean(test_predictions == Y_test)
+print("ACCURACY:", accuracy)
+>>>>>>> fadd6398d599982a421cfbb7c4475eb6e782ddf2

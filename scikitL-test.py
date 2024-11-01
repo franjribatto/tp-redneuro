@@ -1,29 +1,44 @@
+# Importamos las librerías necesarias
 import pandas as pd
 from sklearn.model_selection import train_test_split
+<<<<<<< HEAD
 from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import accuracy_score, classification_report
 
 dataBase = pd.read_csv("heart.csv")
 df_dataBase = dataBase[["age", "cp", "trtbps", "chol", "fbs", "thalachh", "exng"]]
+=======
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report
 
-def df_cleanner(df):
-    for column in df.columns:
-        Q1 = df[column].quantile(0.25)
-        Q3 = df[column].quantile(0.75)
-        IQR = Q3 - Q1
+# Cargamos el dataset
+heart_data = pd.read_csv('heart.csv')
+>>>>>>> fadd6398d599982a421cfbb7c4475eb6e782ddf2
 
-        # Definir límites inferior y superior
-        lower_bound = Q1 - 1.5 * IQR
-        upper_bound = Q3 + 1.5 * IQR
+# Separación de características (X) y etiquetas (y)
+X = heart_data.drop(columns='output')  # Características
+y = heart_data['output']  # Etiquetas
 
-        # Calcular la media de la columna
-        mean_value = df[column].mean()
+# División de los datos en conjuntos de entrenamiento y prueba
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
+# Creación y entrenamiento del modelo
+model = RandomForestClassifier(random_state=42)
+model.fit(X_train, y_train)
+
+<<<<<<< HEAD
         # Reemplazar outliers por la media
         df.loc[(df[column] < lower_bound) | (df[column] > upper_bound), column] =float( mean_value)
+=======
+# Predicción en el conjunto de prueba
+y_pred = model.predict(X_test)
+>>>>>>> fadd6398d599982a421cfbb7c4475eb6e782ddf2
 
-    return df
+# Evaluación del modelo
+accuracy = accuracy_score(y_test, y_pred)
+classification_rep = classification_report(y_test, y_pred)
 
+<<<<<<< HEAD
 # Reemplazar outliers por la media
 df_clean = df_cleanner(df_dataBase)
 
@@ -60,6 +75,9 @@ y_pred = model.predict(X_test)
 accuracy = accuracy_score(y_test, y_pred)
 classification_rep = classification_report(y_test, y_pred)
 
+=======
+# Imprimimos los resultados
+>>>>>>> fadd6398d599982a421cfbb7c4475eb6e782ddf2
 print(f'Precisión del modelo: {accuracy * 100:.2f}%')
 print('Reporte de clasificación:')
 print(classification_rep)
