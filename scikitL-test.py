@@ -1,12 +1,10 @@
 import pandas as pd
-# cargar datos
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
+from sklearn.metrics import accuracy_score, classification_report
 
-df = pd.read_csv('heart.csv', delimiter=",")
-df_dataBase = df[["age","cp","trtbps","chol","fbs","thalachh","exng"]]
-df_desc = df_dataBase.describe().T
-df_descNorm = (df_dataBase - df_desc['mean']) / df_desc['std']
+dataBase = pd.read_csv("heart.csv")
+df_dataBase = dataBase[["age", "cp", "trtbps", "chol", "fbs", "thalachh", "exng"]]
 
 def df_cleanner(df):
     for column in df.columns:
@@ -22,36 +20,46 @@ def df_cleanner(df):
         mean_value = df[column].mean()
 
         # Reemplazar outliers por la media
-        df.loc[(df[column] < lower_bound) | (df[column] > upper_bound), column] = mean_value
+        df.loc[(df[column] < lower_bound) | (df[column] > upper_bound), column] =float( mean_value)
 
     return df
 
 # Reemplazar outliers por la media
-df_clean = df_cleanner(df_descNorm)
+df_clean = df_cleanner(df_dataBase)
 
-# Extraer variables de entrada (todas las filas, todas las columnas menos la última)
-# Nota que deberíamos hacer algún escalado lineal aquí
-X = df_clean.iloc[:, 0:6].values
+df_desc = df_dataBase.describe().T
+df_cleanNorm = (df_clean.iloc[:, :-1] - df_desc['mean'][:-1]) / df_desc['std'][:-1]
+df_cleanNorm['exng'] = df_dataBase['exng']
 
-# Extraer columna de salida (todas las filas, última columna)
-Y = df_clean.iloc[:, -1].values
+df_cleanNorm.describe()
 
-# Separar los datos de entrenamiento y prueba
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=1/3)
+data = df_cleanNorm
 
-nn = MLPClassifier(solver='sgd',
-                   hidden_layer_sizes=(6,),
-                   activation='relu',
-                   max_iter=100_000,
-                   learning_rate_init=.05)
+X = data.iloc[:, :6].values
+y = data.iloc[:, -1].values
 
-nn.fit(X_train, Y_train)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-y_pred = nn.predict(X_test)
+# Crear y configurar la red neuronal
+model = MLPClassifier(
+    hidden_layer_sizes=(6,6,),      # Una capa oculta con 6 neuronas
+    activation='relu',            # Activación ReLU en la capa oculta
+    solver='sgd',                 # Descenso de gradiente estocástico como optimizador
+    max_iter=40000,                 # Número máximo de iteraciones
+    random_state=42,
+    learning_rate_init=0.01,      # Tasa de aprendizaje inicial
+)
 
-# Imprimir pesos y sesgos
-print(nn.coefs_)
-print(nn.intercepts_)
+# Entrenar el modelo
+model.fit(X_train, y_train)
 
-print("Puntaje del conjunto de entrenamiento: %f" % nn.score(X_train, Y_train))
-print("Puntaje del conjunto de prueba: %f" % nn.score(X_test, Y_test))
+# Realizar predicciones en el conjunto de prueba
+y_pred = model.predict(X_test)
+
+# Evaluación del modelo
+accuracy = accuracy_score(y_test, y_pred)
+classification_rep = classification_report(y_test, y_pred)
+
+print(f'Precisión del modelo: {accuracy * 100:.2f}%')
+print('Reporte de clasificación:')
+print(classification_rep)
